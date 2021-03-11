@@ -1,4 +1,5 @@
-export const IS_DEBUG = true;
+export const IS_DEBUG = 0;
+
 console.log('IS_DEBUG', IS_DEBUG);
 
 const version = '1.1.4';
@@ -9,10 +10,10 @@ const appkey = IS_DEBUG ?
 export const BASE_CONFIG = () => {
   return {
     sceneConfig: {
-      scriptSrc: `//map${IS_DEBUG ? '-test' : ''}.airlook.com/v1/sdk/amapmobile?v=${version}&appKey=${appkey}`,
+      scriptSrc: `https://map${IS_DEBUG ? '-test' : ''}.airlook.com/v1/sdk/amapmobile?v=${version}&appKey=${appkey}`,
       appkey: appkey,
-      longitude: "109.58060853821272",
-      latitude: "19.51846651500485"
+      longitude: 109.58060853821272,
+      latitude: 19.51846651500485
     },
   }
 }

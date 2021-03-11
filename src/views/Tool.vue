@@ -682,7 +682,6 @@ export default {
     top: 20vh;
     display: flex;
     width: 260px;
-    max-height: 60vh;
     background-color: rgba(255, 255, 255, 0.5);
     // overflow: auto;
     &.collapse {
