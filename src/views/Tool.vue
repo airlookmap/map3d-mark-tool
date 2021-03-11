@@ -335,7 +335,7 @@ export default {
         this.isMarking = false;
         this.isDrawing = false;
 
-        const { data: height } = await getHeightBycoord({
+        const { data: { altitude: height } } = await getHeightBycoord({
           appKey: this.sceneConfig.appkey,
           longitude: this.sceneConfig.longitude,
           latitude: this.sceneConfig.latitude
