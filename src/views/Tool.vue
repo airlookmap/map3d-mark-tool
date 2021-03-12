@@ -43,7 +43,7 @@
             type="text">
             正摄视角
           </el-button>
-          下进行绘制或坐标拾取操作
+          下进行绘制或坐标拾取操作；请逆时针绘制包围盒
         </div>
         <el-row>
           <el-button size="mini" 
