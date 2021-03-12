@@ -35,6 +35,16 @@
         {{ isCollapse ? "展开" : "收起" }}
       </span>
       <div class="menu">
+        <div class="tips">
+          Tips: 请在
+          <el-button 
+            class="resetPitch" 
+            @click="resetPitch" 
+            type="text">
+            正摄视角
+          </el-button>
+          下进行绘制或坐标拾取操作
+        </div>
         <el-row>
           <el-button size="mini" 
             :disabled="isOperating" 
@@ -107,16 +117,7 @@
             </div>
           </div>
         </el-row>
-        <div class="tips">
-          Tips: 请在
-          <el-button 
-            class="resetPitch" 
-            @click="resetPitch" 
-            type="text">
-            正摄视角
-          </el-button>
-          下进行绘制或坐标拾取操作
-        </div>
+        
         <div class="flex-row flex-row-center">
           <el-button size="mini" @click="clearAllMaker">清除所有标注</el-button>
           <el-button size="mini" @click="clearAllOverlap"
@@ -232,7 +233,7 @@
 </template>
 
 <script>
-import { initScene, initEvent, screen2Cartographic, getTime } from "./utils";
+import { initScene, initEvent, screen2Cartographic, getTime, runPitchAnimation } from "./utils";
 import { getHeightBycoord } from "../api/api";
 import Readme from "./Readme";
 import { BASE_CONFIG } from "../config";
@@ -390,6 +391,7 @@ export default {
             [tips.style.left, tips.style.top] = [x + 6 + "px", y - 10 + "px"];
           }
         });
+        runPitchAnimation(map);
       }
     },
     getCameraInfo() {
@@ -539,6 +541,7 @@ export default {
           [tips.style.left, tips.style.top] = [x + 6 + "px", y - 10 + "px"];
         }
       });
+      runPitchAnimation(map);
     },
     handleDrawPop() {
       this.posStack.pop();
@@ -617,68 +620,7 @@ export default {
     resetPitch() {
       const map = window.map;
       if (map && map.camera) {
-        try {
-          const cb = (e) => console.log(e)
-          map.postRender.addEventListener(cb);
-          map.postRender.removeEventListener(cb);
-
-          const canvas = map.scene.canvas;
-          const { longitude, latitude, height } = screen2Cartographic(
-            canvas.width / 2,
-            canvas.height / 2,
-            map
-          );
-          
-          // 无相机动画版本
-          // const transHeight =
-          //   map.camera.positionCartographic.height /
-          //   Math.sin(Math.abs(map.camera.pitch));
-          // map.camera.positionCartographic = AirlookMap.Cartographic.fromDegrees(
-          //   longitude,
-          //   latitude,
-          //   transHeight
-          // );
-          // map.camera.pitch = AirlookMap.Math.toRadians(90);
-
-          // 支持相机动画
-          const destination = AirlookMap.Cartographic.fromDegrees(
-            longitude,
-            latitude,
-            height
-          );
-          const duration = 1000; // ms
-          const distance = (map.camera.positionCartographic.height - height) / Math.sin(Math.abs(map.camera.pitch));
-          // 动画
-          (function update(map, destination, duration, distance) {
-            map.postRender.addEventListener(updateCamera);
-            const dPitchRad = AirlookMap.Math.toRadians(90) - map.camera.pitch;
-            const pitchRadStep = (1000 / 60 * dPitchRad) / duration; // 假设 60帧/s
-      
-            function updateCamera() {
-              // debugger;
-              if(AirlookMap.Math.toDegrees(map.camera.pitch) >= 90) {
-                map.camera.pitch = AirlookMap.Math.toRadians(90);
-                map.postRender.removeEventListener(updateCamera);
-                return;
-              }
-              const pitch = map.camera.pitch + pitchRadStep;
-              // console.log(pitch);
-              const cart = map.camera.cameraPositionFromTarget({
-                destination: destination,
-                orientation: {
-                  heading: map.camera.heading,
-                  pitch: pitch,
-                },
-                distance: distance,
-              });
-              map.camera.positionCartographic = cart;
-              map.camera.pitch = pitch;
-            }
-          })(map, destination, duration, distance);
-          
-        } catch (error) {
-          console.error(error);
-        }
+        runPitchAnimation(map)
       }
     },
     clearAllMaker() {
@@ -718,7 +660,7 @@ export default {
     top: 0;
   }
   .right-top {
-    padding: 20px 4px;
+    padding: 10px 4px;
     box-sizing: border-box;
     position: fixed;
     right: 0;
@@ -737,7 +679,7 @@ export default {
     .open-close {
       cursor: pointer;
       text-align: center;
-      left: -22px;
+      left: -24px;
       position: absolute;
       display: block;
       width: 20px;
@@ -857,7 +799,7 @@ export default {
     }
   }
   .tips {
-    font-size: 13px;
+    font-size: 14px;
     letter-spacing: 0.4px;
     .el-button {
       padding: 0;

@@ -108,6 +108,67 @@ export const screen2Cartographic = (x, y, map) => {
   };
 }
 
+export const runPitchAnimation = map => {
+  try {
+    const canvas = map.scene.canvas;
+    const { longitude, latitude, height } = screen2Cartographic(
+      canvas.width / 2,
+      canvas.height / 2,
+      map
+    );
+    
+    // 无相机动画版本
+    // const transHeight =
+    //   map.camera.positionCartographic.height /
+    //   Math.sin(Math.abs(map.camera.pitch));
+    // map.camera.positionCartographic = AirlookMap.Cartographic.fromDegrees(
+    //   longitude,
+    //   latitude,
+    //   transHeight
+    // );
+    // map.camera.pitch = AirlookMap.Math.toRadians(90);
+
+    // 支持相机动画
+    const destination = AirlookMap.Cartographic.fromDegrees(
+      longitude,
+      latitude,
+      height
+    );
+    const duration = 1000; // ms
+    const distance = (map.camera.positionCartographic.height - height) / Math.sin(Math.abs(map.camera.pitch));
+    // 动画
+    (function update(map, destination, duration, distance) {
+      map.postRender.addEventListener(updateCamera);
+      const dPitchRad = AirlookMap.Math.toRadians(90) - map.camera.pitch;
+      const pitchRadStep = (1000 / 60 * dPitchRad) / duration; // 假设 60帧/s
+
+      function updateCamera() {
+        // debugger;
+        if(AirlookMap.Math.toDegrees(map.camera.pitch) >= 90) {
+          map.camera.pitch = AirlookMap.Math.toRadians(90);
+          map.postRender.removeEventListener(updateCamera);
+          return;
+        }
+        const pitch = map.camera.pitch + pitchRadStep;
+        // console.log(pitch);
+        const cart = map.camera.cameraPositionFromTarget({
+          destination: destination,
+          orientation: {
+            heading: map.camera.heading,
+            pitch: pitch,
+          },
+          distance: distance,
+        });
+        map.camera.positionCartographic = cart;
+        map.camera.pitch = pitch;
+      }
+    })(map, destination, duration, distance);
+    
+  } catch (error) {
+    console.error(error);
+  }
+}
+
 export const getTime = () =>
 `${new Date().toLocaleDateString()} ${
   new Date().toTimeString().split(" ")[0]
