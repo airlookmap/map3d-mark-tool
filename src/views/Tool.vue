@@ -26,7 +26,7 @@
       </el-form>
     </div>
     <div
-      v-show="!showMarkerWrap"
+      v-show="showTollWrap"
       class="right-top collapse"
       :class="{ collapsed: isCollapse }"
     >
@@ -204,6 +204,23 @@
         </div>
       </div>
     </div>
+    <div v-show="showOverlapWrap" class="right-top marker-config overlap-config">
+      <div>
+        <span class="title">包围盒配置：</span>
+        <div class="flex-row">
+          <span class="label">包围盒名称: </span>
+          <div class="input-wrap">
+            <el-input size="mini" v-model="overlapConfig.label"></el-input>
+          </div>
+        </div>
+        <div class="flex-row flex-row-center">
+          <el-button size="mini" type="" @click="cancelDrawEnd">取消</el-button>
+          <el-button size="mini" type="primary" @click="confirmDrawEnd"
+            >确认</el-button
+          >
+        </div>
+      </div>
+    </div>
     <div class="left-bottom">
       <span class="title"
         >日志信息：
@@ -252,6 +269,7 @@ let offsetY = 0;
 const markerPath =
     "//amapmobile.airlook.com/1.1.2/Assets/images/location-marker.png",
   markerLabel = "X小区#15-20-01";
+const overlapLabel = "X小区#15号楼";
 let curMarker,
   markerList = [];
 let curPolyline;
@@ -292,7 +310,11 @@ export default {
       posStack: [],
       isCollapse: false,
       tipsDict: tipsDict,
-      showTips: false
+      showTips: false,
+      showOverlapWrap: false,
+      overlapConfig: {
+        label: overlapLabel
+      }
     };
   },
   computed: {
@@ -304,6 +326,9 @@ export default {
         : this.isDrawing
         ? "draw"
         : "";
+    },
+    showTollWrap() {
+      return !this.showMarkerWrap && !this.showOverlapWrap;
     }
   },
   watch: {
@@ -377,13 +402,13 @@ export default {
         this.cancelFn = initEvent({
           dom: map.scene.canvas,
           name: "pick",
-          mousedownCb: ({ x, y }) => {
+          clickCb: ({ x, y }) => {
             this.curPosition = screen2Cartographic(x, y, map);
             // console.log(this.curPosition);
             this.updateLog({
               id: uid++,
               time: getTime(),
-              title: "*坐标点：",
+              title: "*坐标点* ：",
               content: JSON.stringify(this.curPosition)
             });
           },
@@ -423,7 +448,7 @@ export default {
       this.cancelFn = initEvent({
         dom: map.scene.canvas,
         name: "pick",
-        mousedownCb: ({ x, y }) => {
+        clickCb: ({ x, y }) => {
           const cartographic = AirlookMap.MathUtils.screenToCartographic(
             new AirlookMap.Cartesian2(x, y),
             map
@@ -501,24 +526,22 @@ export default {
       this.isOperating = false;
       const { longitude, latitude, height } = this.curPosition;
       let res = {
-        position: {
-          longitude,
-          latitude,
-          height
-        },
+        longitude,
+        latitude,
+        height,
         iconPath: this.markerConfig.iconPath,
-        label: this.markerConfig.label,
         nearFarScalar: {
           near: this.markerConfig.nearFarScalar.distance1,
           nearScale: this.markerConfig.nearFarScalar.scale1,
           far: this.markerConfig.nearFarScalar.distance2,
           farScale: this.markerConfig.nearFarScalar.scale2
-        }
+        },
+        label: this.markerConfig.label,
       };
       this.updateLog({
         id: uid++,
         time: getTime(),
-        title: "*标注信息：",
+        title: `${this.markerConfig.label} *标注信息* ：`,
         content: JSON.stringify(res)
       });
       markerList.push(curMarker);
@@ -532,7 +555,7 @@ export default {
       this.cancelFn = initEvent({
         dom: map.scene.canvas,
         name: "pick",
-        mousedownCb: ({ x, y }) => {
+        clickCb: ({ x, y }) => {
           this.curPosition = screen2Cartographic(x, y, map);
           // console.log(this.curPosition);
           this.posStack.push(this.curPosition);
@@ -547,6 +570,23 @@ export default {
       this.posStack.pop();
     },
     handleDrawEnd() {
+      this.showOverlapWrap = true;
+      return;
+      
+    },
+    cancelDrawEnd() {
+      let map = window.map;
+      if (!map) return;
+     
+      map.remove(curPolyline);
+      this.cancelFn && this.cancelFn();
+      this.isOperating = false;
+      this.isDrawing = false;
+      this.posStack = [];
+      curPolyline = null;
+      this.showOverlapWrap = false;
+    },
+    confirmDrawEnd() {
       let map = window.map;
       if (!map) return;
       if (this.posStack.length > 2) {
@@ -554,7 +594,7 @@ export default {
         this.updateLog({
           id: uid++,
           time: getTime(),
-          title: "*包围盒边界信息：",
+          title: `${this.overlapConfig.label} *包围盒边界信息* ：`,
           content: JSON.stringify({
             positions,
             color: "rgb(0,255,0)",
@@ -579,6 +619,7 @@ export default {
       this.isDrawing = false;
       this.posStack = [];
       curPolyline = null;
+      this.showOverlapWrap = false;
     },
     clearLastOverlap() {
       if (!window.map) return;
@@ -667,7 +708,7 @@ export default {
     top: 20vh;
     display: flex;
     width: 260px;
-    background-color: rgba(255, 255, 255, 0.5);
+    background-color: rgba(255, 255, 255, 0.8);
     // overflow: auto;
     &.collapse {
       will-change: auto;
@@ -716,6 +757,7 @@ export default {
     &.marker-config {
       word-break: keep-all;
       width: 350px;
+      padding-left: 10px;
       .title {
         display: inline-block;
         margin-bottom: 8px;
@@ -752,6 +794,17 @@ export default {
         }
       }
     }
+    &.overlap-config {
+      width: 250px;
+      .flex-row {
+        .label {
+           width: 80px;
+        }
+        .input-wrap {
+          width: calc(100% - 80px);
+        }
+      }
+    }
   }
   .left-bottom {
     box-sizing: border-box;
@@ -764,7 +817,7 @@ export default {
     width: 360px;
     height: 250px;
     overflow: hidden;
-    background-color: rgba(255, 255, 255, 0.5);
+    background-color: rgba(255, 255, 255, 0.8);
     .title {
       height: 22px;
       padding-right: 20px;
@@ -783,6 +836,7 @@ export default {
       .log {
         display: block;
         padding-right: 6px;
+        margin-bottom: 5px;
         .time {
           font-size: 12px;
           color: #f20c0c;
@@ -801,6 +855,7 @@ export default {
   .tips {
     font-size: 14px;
     letter-spacing: 0.4px;
+    line-height: 1.4;
     .el-button {
       padding: 0;
     }

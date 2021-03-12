@@ -39,6 +39,7 @@ export default {
 </script>
 <style lang="scss" scoped>
 .readme-wrap {
+	user-select: none;
 	display: flex;
 	position: fixed;
 	right: -400px;
@@ -70,7 +71,7 @@ export default {
 	.content {
 		padding: 10px 0 10px 20px;
 		text-align: left;
-		background: rgba(255, 255, 255, 0.5);
+		background: rgba(255, 255, 255, 0.8);
 		display: flex;
 		width: 100%;
 		font-size: 14px;

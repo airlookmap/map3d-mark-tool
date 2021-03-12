@@ -57,37 +57,61 @@ export const initScene = async function(sceneData) {
 
 // let lastDom;
 export const initEvent = ctx => {
+  // 临时修改 需要重构 
   // console.log(ctx)
   const dom = ctx.dom;
   const mousedownCb = ctx.mousedownCb || (() => {});
+  const mouseupCb = ctx.mouseupCb || (() => {});
+  const clickCb = ctx.clickCb || (() => {});
   const mousemoveCb = ctx.mousemoveCb || (() => {});
   const mousemoveCall = () => {};
 
-  const mouseup = () => {
-    // console.log('mouseup');
+  let dx = 0, dy = 0;
+  let lastX = 0, lastY = 0;
+  let status = 'init';
+
+  const mouseup = e => {
+    const x = e.clientX,
+      y = e.clientY;
+    if(status !== 'move') status = 'click';
+    if(status === 'click') {
+      clickCb({x, y});
+    }
+    mouseupCb();
+    status = 'init';
     document.removeEventListener('mousemove', mousemove);
     document.removeEventListener('mouseup', mouseup);
   };
   const mousemove = e => {
     const x = e.clientX,
       y = e.clientY;
-    mousemoveCall({x, y});
+
+    [dx, dy] = [x - lastX, y - lastY];
+
+    if(status === 'down' && Math.hypot(dx, dy) >= 5) { 
+      status = 'move';
+      mousemoveCall({x, y});
+    }
   };
   const mousedown = e => {
+    if(status === 'init') status = 'down';
     // console.log(e)
     const x = e.clientX,
       y = e.clientY;
+
     if (e.which == 1) {
       // console.log('mousedown', {x, y});
       mousedownCb({x, y});
       document.addEventListener('mousemove', mousemove);
       document.addEventListener('mouseup', mouseup);
     }
+    [lastX, lastY] = [x, y];
   }
   
   dom.addEventListener('mousedown', mousedown);
   document.addEventListener('mousemove', mousemoveCb);
   return () => {
+    status = 'init';
     dom.removeEventListener('mousedown', mousedown);
     document.removeEventListener('mousemove', mousemoveCb);
   }
