@@ -132,7 +132,7 @@ export const screen2Cartographic = (x, y, map) => {
   };
 }
 
-export const runPitchAnimation = map => {
+export const runPitchAnimation = (map, opt = {}) => {
   try {
     const canvas = map.scene.canvas;
     const { longitude, latitude, height } = screen2Cartographic(
@@ -158,7 +158,7 @@ export const runPitchAnimation = map => {
       latitude,
       height
     );
-    const duration = 1000; // ms
+    const duration = opt.duration || 500; // ms
     const distance = (map.camera.positionCartographic.height - height) / Math.sin(Math.abs(map.camera.pitch));
     // 动画
     (function update(map, destination, duration, distance) {

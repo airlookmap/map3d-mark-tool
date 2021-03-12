@@ -75,6 +75,7 @@
         <el-row>
           <el-button 
             size="mini" 
+            :disabled="isOperating" 
             @click.stop.prevent="getCameraInfo"
             >获取相机信息</el-button
           >
@@ -119,10 +120,15 @@
         </el-row>
         
         <div class="flex-row flex-row-center">
-          <el-button size="mini" @click="clearAllMaker">清除所有标注</el-button>
-          <el-button size="mini" @click="clearAllOverlap"
-            >清除所有包围盒</el-button
-          >
+          <el-button 
+            size="mini" 
+            :disabled="isOperating"
+            @click="clearAllMaker">清除所有标注</el-button>
+          <el-button 
+            size="mini" 
+            :disabled="isOperating"
+            @click="clearAllOverlap"
+            >清除所有包围盒</el-button>
         </div>
       </div>
     </div>
@@ -571,17 +577,18 @@ export default {
     },
     handleDrawEnd() {
       this.showOverlapWrap = true;
-      return;
-      
+      this.cancelFn && this.cancelFn();
+      this.isDrawing = false;
+      if (this.posStack.length < 3) {
+        this.cancelDrawEnd();
+      }
     },
     cancelDrawEnd() {
       let map = window.map;
       if (!map) return;
-     
       map.remove(curPolyline);
-      this.cancelFn && this.cancelFn();
       this.isOperating = false;
-      this.isDrawing = false;
+      // this.isDrawing = false;
       this.posStack = [];
       curPolyline = null;
       this.showOverlapWrap = false;
@@ -591,6 +598,10 @@ export default {
       if (!map) return;
       if (this.posStack.length > 2) {
         let positions = [...this.posStack, this.posStack[0]];
+        // let res = {
+        //   positions,
+        //   label: this.overlapConfig.label
+        // }
         this.updateLog({
           id: uid++,
           time: getTime(),
@@ -609,13 +620,7 @@ export default {
         map.add(curOverlap);
         overlapList.push(curOverlap);
       }
-      map.remove(curPolyline);
-      this.cancelFn && this.cancelFn();
-      this.isOperating = false;
-      this.isDrawing = false;
-      this.posStack = [];
-      curPolyline = null;
-      this.showOverlapWrap = false;
+      this.cancelDrawEnd();
     },
     clearLastOverlap() {
       if (!window.map) return;
