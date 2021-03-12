@@ -595,11 +595,7 @@ export default {
           id: uid++,
           time: getTime(),
           title: `${this.overlapConfig.label} *包围盒边界信息* ：`,
-          content: JSON.stringify({
-            positions,
-            color: "rgb(0,255,0)",
-            opacity: 0.5
-          })
+          content: JSON.stringify(positions)
         });
         const fromDegrees = AirlookMap.Cartographic.fromDegrees;
         curOverlap = new AirlookMap.OverlappingPolygons({
@@ -795,7 +791,7 @@ export default {
       }
     }
     &.overlap-config {
-      width: 250px;
+      width: 280px;
       .flex-row {
         .label {
            width: 80px;
