@@ -609,12 +609,12 @@ export default {
           content: JSON.stringify(positions)
         });
         const fromDegrees = AirlookMap.Cartographic.fromDegrees;
-        curOverlap = new AirlookMap.OverlappingPolygons({
+        curOverlap = window.curOverlap = new AirlookMap.OverlappingPolygons({
           positions: positions.map(v =>
             fromDegrees(v.longitude, v.latitude, v.height)
           ),
-          color: "rgb(0,255,0)",
-          opacity: 0.5,
+          color: "rgb(255,255,255)",
+          opacity: 0.2,
           show: true
         });
         map.add(curOverlap);
